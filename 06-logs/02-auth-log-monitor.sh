@@ -5,4 +5,5 @@
 LOG="/var/log/auth.log"
 
 echo "=== Last 10 failed login attempts ==="
-sudo grep "Failed password" "$LOG" | tail -n 10
+sudo grep -a "Failed password" "$LOG" | tail -n 10
+
