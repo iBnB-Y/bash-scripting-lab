@@ -1,0 +1,34 @@
+#!/bin/bash
+# Secure Watch — system monitoring tool
+
+set -euo pipefail
+
+CONFIG="/etc/secure-watch.conf"
+LOG_FILE="/var/log/secure-watch.log"
+VERBOSE=false
+
+usage() {
+    echo "secure-watch [-v]"
+    echo "System monitoring & defense tool"
+}
+
+log() {
+    echo "$(date '+%F %T') - $1" >> "$LOG_FILE"
+    $VERBOSE && echo "$1"
+}
+
+[[ -f "$CONFIG" ]] && source "$CONFIG"
+
+while getopts ":vh" opt; do
+    case "$opt" in
+        v) VERBOSE=true ;;
+        h) usage; exit 0 ;;
+    esac
+done
+
+systemctl is-active --quiet "$SERVICE" \
+  && log "$SERVICE running" \
+  || { log "$SERVICE down, restarting"; systemctl restart "$SERVICE"; }
+
+FAILED=$(grep "Failed password" /var/log/auth.log | wc -l || true)
+[[ "$FAILED" -ge "$FAILED_LIMIT" ]] && log "Warning: $FAILED failed logins"
